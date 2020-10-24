@@ -1,10 +1,12 @@
 package com.example.newsreader;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.Xml;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -22,13 +24,18 @@ public class MainActivity extends AppCompatActivity {
     public static final String TAG="News Reader";
     private RecyclerView recyclerView;
     private ArrayList<NewsItem> news;
+    private NewsAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        news= new ArrayList<>();
         recyclerView= findViewById(R.id.recyclerView);
+        adapter= new NewsAdapter(this);
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        new GetNews().execute();
     }
 
     // We want to load the news from a website and we will do that in a background task and as we dont want
@@ -48,6 +55,11 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            adapter.setList(news);
         }
 
         private void initXMLPullParser(InputStream inputStream) throws XmlPullParserException, IOException {
@@ -89,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
                                 continue;
 
                             String tagName= parser.getName();
+                            //Log.e(TAG, "TAg name =:" +tagName);
                             if(tagName.equals("title"))
                             {
                                 title= getContent(parser, "title");
@@ -99,11 +112,13 @@ public class MainActivity extends AppCompatActivity {
                             }
                             else if(tagName.equals("description"))
                             {
+                               // Log.e(TAG, "TAG DESC FOUND");
                                 des= getContent(parser, "description");
                             }
-                            else if(tagName.equals("pubdate"))
+                            else if(tagName.equalsIgnoreCase("pubDate"))
                             {
-                                date= getContent(parser, "pubdate");
+                               // Log.e(TAG, "TAG FOUND");
+                                date= getContent(parser, "pubDate");
                             }
                             else
                             {
@@ -111,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         }
                         NewsItem obj= new NewsItem(title, des, link, date);
+                        //Log.e(TAG, date);
                         news.add(obj);
                     }
                     else
